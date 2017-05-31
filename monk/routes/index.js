@@ -37,7 +37,7 @@ router.post('/update', function(req, res, next){
 	var id = req.body.id;
 
 	userData.update({"_id": db.id(id)}, item);
-	userData.updateById(id, item);
+	userData.findOne(id, item);
 
 	res.redirect('/');
 });
@@ -46,7 +46,9 @@ router.post('/delete', function(req, res, next){
 	var id = req.body.id;
 
 	// userData.remove("_id": db.id(id));
-	userData.removeById(id)
+	userData.remove(id);
+
+	res.redirect('/');
 });
 
 module.exports = router;
