@@ -1,7 +1,18 @@
 var express = require('express');
 var router = express.Router();
-var db = require('monk')('localhost:27017/test');
-var userData = db.get('user-data');
+var mongoose = require('mongoose');
+mongoose.connect('localhost:27017/test');
+var Schema = mongoose.Schema;
+
+mongoose.Promise = global.Promise;
+
+var userDataSchema = new Schema({
+	title: String,
+	content: String,
+	author: String
+}, {collection: 'user-data'});
+
+var UserData = mongoose.model('UserData', userDataSchema);
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -9,10 +20,10 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/get-data', function(req, res, next){
-	userData.find({}, function(err, docs){
-		if(err) throw err;
-		res.render('index', {items: docs})
-	});
+	UserData.find()
+		.then(function(doc){
+			res.render('index', {items: doc})
+		});
 });
 
 router.post('/insert', function(req, res, next){
@@ -22,31 +33,31 @@ router.post('/insert', function(req, res, next){
 		author: req.body.author
 	};
 
-	userData.insert(item);
+	var data = UserData(item);
+	data.save();
 
 	res.redirect('/');
 });
 
 router.post('/update', function(req, res, next){
-	var item = {
-		title: req.body.title,
-		content: req.body.content,
-		author: req.body.author
-	};
-
 	var id = req.body.id;
 
-	userData.update({"_id": db.id(id)}, item);
-	userData.findOne(id, item);
+	UserData.findById(id, function(err, doc){
+		if(err){
+			console.error('error, no entry found.');
+		}
+		doc.title = req.body.title;
+		doc.content =  req.body.conent;
+		doc.author = req.body.author;
+		doc.save();
+	});
 
 	res.redirect('/');
 });
 
 router.post('/delete', function(req, res, next){
 	var id = req.body.id;
-
-	// userData.remove("_id": db.id(id));
-	userData.remove(id);
+	UserData.findByIdAndRemove(id).exec();
 
 	res.redirect('/');
 });
